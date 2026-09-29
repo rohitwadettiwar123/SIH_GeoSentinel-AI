@@ -1,0 +1,86 @@
+import axios from 'axios';
+import { UploadResponse, AnalysisResult } from '../types';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api',
+});
+
+export const client = {
+  async uploadImage(file: File): Promise<UploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post<UploadResponse>('/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    if (data.preview_url && data.preview_url.startsWith('/uploads')) {
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api').replace('/api', '');
+        data.preview_url = baseUrl + data.preview_url;
+    }
+    return data;
+  },
+
+  async fetchAoiImage(aoi: { north: number; south: number; east: number; west: number, year: number }): Promise<UploadResponse> {
+    const { data } = await api.post<UploadResponse>('/upload/aoi', aoi);
+    if (data.preview_url && data.preview_url.startsWith('/uploads')) {
+        const baseUrl = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api').replace('/api', '');
+        data.preview_url = baseUrl + data.preview_url;
+    }
+    return data;
+  },
+
+  async analyze(imageIds: string[], query: string, taskHint?: string, bbox?: number[]): Promise<AnalysisResult> {
+    const { data } = await api.post<AnalysisResult>('/analyze', {
+      image_ids: imageIds,
+      query,
+      task_hint: taskHint,
+      bbox,
+    });
+    return data;
+  },
+
+  async checkHealth() {
+    const { data } = await api.get('/health');
+    return data;
+  },
+  
+  async getBenchmark() {
+    const { data } = await api.get('/benchmark/20');
+    return data;
+  },
+
+  async geoStatus(imageId: string) {
+    const { data } = await api.get(`/gis/status/${imageId}`);
+    return data;
+  },
+
+  /** Export detected objects as GeoJSON (returns Blob for download) */
+  async exportGeojson(imageId: string, detectedObjects: any[], taskType: string): Promise<Blob> {
+    const { data } = await api.post('/gis/export/geojson', {
+      image_id: imageId,
+      detected_objects: detectedObjects,
+      task_type: taskType,
+    }, { responseType: 'blob' });
+    return data;
+  },
+
+  /** Export detected objects as ESRI Shapefile ZIP */
+  async exportShapefile(imageId: string, detectedObjects: any[], taskType: string): Promise<Blob> {
+    const { data } = await api.post('/gis/export/shapefile', {
+      image_id: imageId,
+      detected_objects: detectedObjects,
+      task_type: taskType,
+    }, { responseType: 'blob' });
+    return data;
+  },
+
+  /** Export detected objects as GeoPackage */
+  async exportGpkg(imageId: string, detectedObjects: any[], taskType: string): Promise<Blob> {
+    const { data } = await api.post('/gis/export/gpkg', {
+      image_id: imageId,
+      detected_objects: detectedObjects,
+      task_type: taskType,
+    }, { responseType: 'blob' });
+    return data;
+  },
+};
+

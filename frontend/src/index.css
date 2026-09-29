@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-space text-gray-200 overflow-hidden;
+  }
+}
+
+@layer components {
+  .mission-panel {
+    @apply bg-panel/90 backdrop-blur-xl border border-panel-border/60 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.8)] overflow-hidden relative transition-all duration-300;
+  }
+  
+  .mission-panel::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-neon-cyan/30 to-transparent opacity-70;
+  }
+
+  .neon-text-green {
+    @apply text-neon-green;
+    text-shadow: 0 0 12px rgba(57, 255, 20, 0.6);
+  }
+  
+  .neon-text-cyan {
+    @apply text-neon-cyan;
+    text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  }
+
+  .hide-scrollbar,
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar,
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 3D Explorer floating map control button */
+  .map-ctrl-btn {
+    @apply w-9 h-9 flex items-center justify-center rounded-xl
+           bg-[#040c1a]/90 backdrop-blur-sm border border-cyan-900/40
+           text-gray-400 hover:text-cyan-300 hover:border-cyan-600/60
+           transition-all shadow-lg;
+  }
+
+  .glass-panel {
+    @apply bg-[#050b18]/60 backdrop-blur-md border border-gray-700/50 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden;
+  }
+  .glass-panel::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none;
+  }
+
+  .btn-3d {
+    @apply bg-gradient-to-r from-cyan-900/40 to-[#0a1428] hover:from-cyan-800/60 hover:to-cyan-900/40 border border-cyan-500/30 hover:border-cyan-400/50 rounded-lg text-cyan-400 transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_rgba(0,245,255,0.1)] hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,245,255,0.3)];
+  }
+}
+
+/* Custom Scrollbar for HUD feel */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-panel-border/50 rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neon-cyan/80 shadow-[0_0_10px_rgba(0,240,255,0.8)];
+}
+
+/* Horizontal Scrollbar specifically for Trace Panel */
+.custom-trace-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.custom-trace-scroll::-webkit-scrollbar-track {
+  @apply bg-[#0f1522] rounded-full;
+}
+.custom-trace-scroll::-webkit-scrollbar-thumb {
+  @apply bg-[#374151] rounded-full;
+}
+.custom-trace-scroll::-webkit-scrollbar-thumb:hover {
+  @apply bg-[#2dd4bf] shadow-[0_0_8px_rgba(45,212,191,0.6)];
+}
+
+/* CRT Scanline Overlay */
+.scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0,0,0,0.1) 50%,
+    rgba(0,0,0,0.1)
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.15;
+}
