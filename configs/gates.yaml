@@ -1,0 +1,26 @@
+G0:
+  require_crs: true
+  supported_bands: [3, 4, 6, 13]
+  critical: true
+G1:
+  max_coregistration_rmse_px: 2.0
+  critical: true
+G2:
+  nyquist_factor: 2.0
+  critical: true
+G3:
+  min_quality_score: 0.60
+  critical: false
+G4:
+  max_cloud_frac: 0.30
+  warn_cloud_frac: 0.15
+  critical: true
+G6:
+  seasonal_risk_max: 0.5
+  critical: false
+G7:
+  report_threshold: 0.60
+  critical: true
+G8:
+  escalation_threshold: 0.75
+  critical: false

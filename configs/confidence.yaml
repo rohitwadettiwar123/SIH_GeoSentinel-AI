@@ -1,0 +1,11 @@
+weights:
+  semantic: 1.0
+  temporal: 1.0
+  quality: 0.30
+  registration: 0.20
+  consistency: 0.15
+  model: 0.10
+  scientific: 1.5
+  persistence: 1.0
+temporal_age:
+  half_life_days: 365

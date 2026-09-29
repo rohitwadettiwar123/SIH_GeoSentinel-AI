@@ -1,0 +1,7 @@
+features:
+  semantic_search: true
+  clustering: true
+  sar_fusion: false
+  local_llm: false
+  explorer3d_link: true
+  cloud_reconstruction: false

@@ -1,0 +1,23 @@
+system:
+  offline_mode: false
+  seed: 42
+storage:
+  database: "sqlite"
+  path: "data/geo.db"
+geospatial:
+  crs: "EPSG:4326"
+retrieval:
+  backend: "faiss"
+  index_type: "flat"
+  top_k: 20
+  min_semantic_score: 0.20
+embedding:
+  model: "openclip_vit_b32"
+  path: "models/openclip_vit_b32"
+  batch_size: 16
+  device: "auto"
+change_detection:
+  method: "baseline"
+  threshold: 0.5
+  min_persistence: 2
+  min_report_confidence: 0.60

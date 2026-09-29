@@ -1,0 +1,6 @@
+weights:
+  semantic: 0.45
+  metadata: 0.15
+  temporal: 0.10
+  quality: 0.15
+  geo: 0.15
