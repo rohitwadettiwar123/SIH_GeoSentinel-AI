@@ -1,0 +1,52 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              88.701,
+              24.795
+            ],
+            [
+              88.747,
+              24.795
+            ],
+            [
+              88.747,
+              24.842
+            ],
+            [
+              88.701,
+              24.842
+            ],
+            [
+              88.701,
+              24.795
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "id": 1,
+        "label": "Flood Inundation Zone (SYNTHETIC)",
+        "confidence": 0.98,
+        "area_hectares": 700.0,
+        "export_crs": "EPSG:4326"
+      }
+    }
+  ],
+  "metadata": {
+    "feature_count": 1,
+    "export_crs": "EPSG:4326"
+  }
+}
