@@ -16,13 +16,33 @@ class EmbeddingProvider:
     def embed_text(self, texts: List[str]) -> np.ndarray:
         raise NotImplementedError
 
+@register("embedding", "sentence_transformers")
+class SentenceTransformerProvider(EmbeddingProvider):
+    def __init__(self, model_name: str = "clip-ViT-B-32"):
+        super().__init__("sentence_transformers", "1.0", 512)
+        try:
+            from sentence_transformers import SentenceTransformer
+            self.model = SentenceTransformer(model_name)
+            self.dim = self.model.get_sentence_embedding_dimension()
+        except ImportError:
+            raise ImportError("sentence_transformers is not installed. Please install it.")
+        
+    def embed_images(self, image_paths: List[str]) -> np.ndarray:
+        from PIL import Image
+        images = [Image.open(p).convert('RGB') for p in image_paths]
+        emb = self.model.encode(images)
+        return np.array(emb, dtype=np.float32)
+
+    def embed_text(self, texts: List[str]) -> np.ndarray:
+        emb = self.model.encode(texts)
+        return np.array(emb, dtype=np.float32)
+
 @register("embedding", "dummy_clip")
 class DummyClipProvider(EmbeddingProvider):
     def __init__(self):
         super().__init__("dummy_clip", "1.0", 512)
         
     def embed_images(self, image_paths: List[str]) -> np.ndarray:
-        # returns dummy random vectors
         return np.random.rand(len(image_paths), self.dim).astype('float32')
 
     def embed_text(self, texts: List[str]) -> np.ndarray:

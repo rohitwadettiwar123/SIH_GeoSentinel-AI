@@ -7,7 +7,7 @@ import {
 
 export type PageId =
   | 'dashboard' | 'semantic-search' | 'change-analysis'
-  | 'similar-sites' | 'tactical' | 'explorer3d'
+  | 'tactical' | 'explorer3d'
   | 'ask-ai' | 'evidence' | 'data-ingestion'
   | 'settings' | 'reports';
 
@@ -21,7 +21,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',       label: 'Dashboard',      icon: LayoutDashboard },
   { id: 'semantic-search', label: 'Semantic Search', icon: Search },
   { id: 'change-analysis', label: 'Change Analysis', icon: ArrowLeftRight },
-  { id: 'similar-sites',   label: 'Similar Sites',   icon: Globe2 },
   { id: 'tactical',        label: '2D Tactical',     icon: Map },
   { id: 'explorer3d',      label: '3D Explorer',     icon: Layers3 },
   { id: 'ask-ai',          label: 'Ask AI',          icon: MessageSquare },

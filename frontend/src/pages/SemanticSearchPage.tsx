@@ -1,49 +1,56 @@
-import React, { useState } from 'react';
-import { Search, Filter, Calendar, Cpu, Star, Loader2, Image as ImageIcon, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, Calendar, Cpu, Star, Loader2, Image as ImageIcon, MapPin, Target, ArrowLeftRight, Globe2, Activity } from 'lucide-react';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string) || 'http://127.0.0.1:8000/api';
 
-const SENSORS = ['All Sensors', 'Sentinel-2', 'Landsat-9', 'ISRO LISS-IV', 'SAR/Radar', 'Planet Labs'];
+const SENSORS = ['All Sensors', 'Sentinel-1 SAR', 'Sentinel-2', 'Landsat-9', 'ISRO LISS-IV', 'Planet Labs'];
 const AREAS = ['Global', 'South Asia', 'India — Eastern', 'India — Western', 'Bay of Bengal', 'Himalayan Region', 'Coastal India'];
 
-const MOCK_RESULTS = [
-  { id: 'SC-20240912-001', date: '2024-09-12', sensor: 'Sentinel-2', score: 0.97, region: 'Brahmaputra Valley', cloud: 8 },
-  { id: 'SC-20240903-042', date: '2024-09-03', sensor: 'Landsat-9',  score: 0.93, region: 'Ganges Delta', cloud: 12 },
-  { id: 'SC-20240825-017', date: '2024-08-25', sensor: 'Sentinel-2', score: 0.91, region: 'Yamuna Flood Plain', cloud: 5 },
-  { id: 'SC-20240818-009', date: '2024-08-18', sensor: 'ISRO LISS',  score: 0.88, region: 'Sundarbans', cloud: 22 },
-  { id: 'SC-20240811-033', date: '2024-08-11', sensor: 'Sentinel-2', score: 0.85, region: 'Chilika Lake', cloud: 3 },
-  { id: 'SC-20240730-021', date: '2024-07-30', sensor: 'Landsat-9',  score: 0.83, region: 'Kaveri Delta', cloud: 18 },
-  { id: 'SC-20240722-055', date: '2024-07-22', sensor: 'SAR/Radar',  score: 0.80, region: 'Bihar Flood Region', cloud: 0 },
-  { id: 'SC-20240714-008', date: '2024-07-14', sensor: 'Sentinel-2', score: 0.78, region: 'Mahanadi Basin', cloud: 31 },
-];
-
 interface SearchResult {
-  id: string;
+  tile_id: string;
   date: string;
   sensor: string;
-  score: number;
-  region: string;
-  cloud: number;
+  scores: {
+    semantic: number;
+  };
+  region?: string;
+  cloud?: number;
+  thumb?: string;
 }
 
-export default function SemanticSearchPage() {
+export default function SemanticSearchPage({ setActivePage }: { setActivePage: (p: string) => void }) {
   const [query, setQuery] = useState('');
   const [aoi, setAoi] = useState('Global');
   const [sensor, setSensor] = useState('All Sensors');
-  const [dateFrom, setDateFrom] = useState('2024-01-01');
-  const [dateTo, setDateTo] = useState('2024-12-31');
-  const [results, setResults] = useState<SearchResult[]>(MOCK_RESULTS);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [status, setStatus] = useState<any>(null);
+
+  // Check health on load
+  useEffect(() => {
+    fetch(`${API_BASE}/v1/search/health`)
+      .then(res => res.json())
+      .then(data => setStatus(data))
+      .catch(console.error);
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
     setLoading(true);
     try {
+      const filters: any = {};
+      if (aoi !== 'Global') filters.aoi = aoi;
+      if (sensor !== 'All Sensors') filters.sensor = sensor;
+      if (dateFrom) filters.dateFrom = dateFrom;
+      if (dateTo) filters.dateTo = dateTo;
+
       const reqBody = {
         query,
-        filters: { aoi, sensor, dateFrom, dateTo },
-        top_k: 8
+        filters,
+        top_k: 20
       };
       const res = await fetch(`${API_BASE}/v1/search/text`, {
         method: 'POST',
@@ -52,25 +59,82 @@ export default function SemanticSearchPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setResults(Array.isArray(data?.data?.hits) && data.data.hits.length > 0 ? data.data.hits : MOCK_RESULTS);
+        setResults(Array.isArray(data?.data?.hits) ? data.data.hits : []);
       } else {
-        setResults(MOCK_RESULTS);
+        setResults([]);
       }
     } catch {
-      setResults(MOCK_RESULTS);
+      setResults([]);
     } finally {
       setLoading(false);
+      setSelected(null);
+    }
+  };
+
+  const handleImageSearch = async (file: File) => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const res = await fetch(`${API_BASE}/v1/search/image?top_k=20`, {
+        method: 'POST',
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResults(Array.isArray(data?.data?.hits) ? data.data.hits : []);
+      } else {
+        setResults([]);
+      }
+    } catch {
+      setResults([]);
+    } finally {
+      setLoading(false);
+      setSelected(null);
+    }
+  };
+
+  const handleBuildIndex = async () => {
+    try {
+      await fetch(`${API_BASE}/search/semantic/rebuild`, { method: 'POST' });
+      alert("Index build started. Check terminal.");
+    } catch (e) {
+      console.error(e);
     }
   };
 
   const scoreColor = (s: number) => s >= 0.9 ? 'text-green-400 bg-green-500/10 border-green-500/30' : s >= 0.8 ? 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30' : 'text-amber-400 bg-amber-500/10 border-amber-500/30';
 
   return (
-    <div className="h-full flex flex-col gap-3 p-4 overflow-hidden">
+    <div className="h-full flex flex-col gap-3 p-4 overflow-hidden relative">
       {/* Header */}
-      <div className="shrink-0">
-        <h2 className="font-mono text-lg font-bold text-white tracking-wider">SEMANTIC SEARCH</h2>
-        <p className="text-[11px] text-gray-500 font-mono">Natural-language search across indexed satellite imagery</p>
+      <div className="flex justify-between items-start shrink-0">
+        <div>
+          <h2 className="font-mono text-lg font-bold text-white tracking-wider">SEMANTIC SEARCH</h2>
+          <p className="text-[11px] text-gray-500 font-mono">Natural-language and Image-to-Image search across indexed satellite imagery</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-[9px] font-mono text-right">
+            <p className="text-gray-500 mb-1">ENGINE STATUS</p>
+            {status ? (
+              <div className="flex items-center gap-1.5 justify-end">
+                <div className={`w-1.5 h-1.5 rounded-full ${status.status === 'ready' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                <span className={status.status === 'ready' ? 'text-green-400' : 'text-amber-400'}>
+                  {status.status.toUpperCase()}
+                </span>
+                <span className="text-gray-600 ml-2">[{status.indexed_items} tiles]</span>
+              </div>
+            ) : (
+              <span className="text-gray-600">Checking...</span>
+            )}
+          </div>
+          {status?.status !== 'ready' && (
+             <button onClick={handleBuildIndex} className="btn-3d px-3 py-1.5 text-[9px] text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+               BUILD INDEX
+             </button>
+          )}
+        </div>
       </div>
 
       {/* Search bar */}
@@ -86,10 +150,25 @@ export default function SemanticSearchPage() {
               className="w-full bg-[#020817] border border-gray-700/60 rounded-lg pl-10 pr-4 py-2.5 text-xs font-mono text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-colors"
             />
           </div>
+          
+          <div className="relative">
+             <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="Upload Image for Similarity Search"
+                onChange={e => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleImageSearch(e.target.files[0]);
+                  }
+                }}
+             />
+             <button className="btn-3d px-4 py-2 flex items-center justify-center gap-2 text-xs font-mono hover:bg-cyan-500/10 transition-colors border border-gray-700/60 text-gray-300">
+               <ImageIcon className="w-3.5 h-3.5" />
+               IMAGE SEARCH
+             </button>
+          </div>
+
           <button
             onClick={handleSearch}
             disabled={loading}
-            className="px-4 py-2 btn-3d px-4 py-2 flex items-center justify-center gap-2-lg text-xs font-mono font-bold hover:bg-cyan-500/30 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="btn-3d px-4 py-2 flex items-center justify-center gap-2 text-xs font-mono font-bold hover:bg-cyan-500/30 transition-colors disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
             SEARCH
@@ -127,37 +206,62 @@ export default function SemanticSearchPage() {
         <span className="text-[10px] font-mono text-cyan-400 font-bold">{results.length} scenes</span>
         {loading && <Loader2 className="w-3 h-3 text-cyan-400 animate-spin" />}
       </div>
-      <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-4 gap-3">
-          {results.map(r => (
+      
+      {!loading && results.length === 0 && query && (
+        <div className="flex-1 flex flex-col items-center justify-center opacity-50">
+          <Search className="w-8 h-8 text-gray-600 mb-2" />
+          <p className="text-[10px] font-mono text-gray-500">No semantically relevant imagery found. Try broader filters.</p>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto custom-trace-scroll pr-2 pb-20">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {results.map((r, idx) => (
             <div
-              key={r.id}
-              onClick={() => setSelected(r.id === selected ? null : r.id)}
-              className={`bg-[#050b18] border rounded-xl overflow-hidden cursor-pointer transition-all duration-200 ${
-                selected === r.id ? 'border-cyan-500/60 ring-1 ring-cyan-500/30' : 'border-gray-800/60 hover:border-gray-700'
+              key={r.tile_id}
+              onClick={() => setSelected(r.tile_id === selected ? null : r.tile_id)}
+              className={`bg-[#050b18] border rounded-xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col ${
+                selected === r.tile_id ? 'border-cyan-500/60 ring-1 ring-cyan-500/30' : 'border-gray-800/60 hover:border-gray-700'
               }`}
             >
-              {/* Thumbnail placeholder */}
-              <div className="h-28 bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900 flex items-center justify-center relative">
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 8px, rgba(0,240,255,0.08) 8px, rgba(0,240,255,0.08) 9px)' }} />
-                <ImageIcon className="w-8 h-8 text-gray-700" />
-                <span className={`absolute top-2 right-2 px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold ${scoreColor(r.score)}`}>
-                  {Math.round(r.score * 100)}%
+              <div className="h-28 bg-[#020817] relative flex items-center justify-center group overflow-hidden shrink-0">
+                {r.thumb ? (
+                  <img src={`${API_BASE.replace('/api', '')}${r.thumb}`} alt="Satellite Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-gray-700" />
+                )}
+                <span className={`absolute top-2 right-2 px-1.5 py-0.5 rounded border text-[9px] font-mono font-bold shadow-lg ${scoreColor(r.scores.semantic)}`}>
+                  {(r.scores.semantic * 100).toFixed(1)}%
                 </span>
-                <span className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-[9px] font-mono text-gray-400">{r.sensor}</span>
+                <span className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-black/80 rounded border border-gray-700/50 text-[9px] font-mono text-gray-400">
+                  {r.sensor}
+                </span>
+                <span className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/80 rounded text-[9px] font-mono text-white border border-gray-700/50">
+                  #{idx + 1}
+                </span>
               </div>
-              <div className="p-3">
-                <p className="text-[10px] font-mono font-bold text-gray-300 truncate">{r.id}</p>
-                <p className="text-[10px] font-mono text-cyan-400 mt-0.5">{r.region}</p>
-                <div className="flex justify-between mt-2">
+              <div className="p-3 flex flex-col flex-1">
+                <p className="text-[10px] font-mono font-bold text-gray-300 truncate" title={r.tile_id}>{r.tile_id}</p>
+                <p className="text-[10px] font-mono text-cyan-400 mt-0.5 truncate">{r.region || 'Unknown Location'}</p>
+                <div className="flex justify-between mt-2 mt-auto pt-2">
                   <span className="text-[9px] font-mono text-gray-600">{r.date}</span>
-                  <span className="text-[9px] font-mono text-gray-600">{r.cloud}% cloud</span>
-                </div>
-                <div className="mt-1.5 flex items-center gap-1">
-                  <Star className="w-2.5 h-2.5 text-amber-400" />
-                  <span className={`text-[9px] font-mono font-bold ${scoreColor(r.score).split(' ')[0]}`}>Score: {r.score.toFixed(2)}</span>
+                  <span className="text-[9px] font-mono text-gray-600">{r.cloud !== undefined ? `${r.cloud}% cloud` : ''}</span>
                 </div>
               </div>
+              
+              {/* Action Bar when selected */}
+              {selected === r.tile_id && (
+                <div className="bg-[#020817] border-t border-cyan-500/20 p-2 grid grid-cols-2 gap-1 shrink-0">
+                  <button onClick={(e) => { e.stopPropagation(); setActivePage?.('tactical'); }} className="flex flex-col items-center justify-center gap-1 p-1.5 rounded hover:bg-cyan-500/10 text-cyan-400/80 hover:text-cyan-400 transition-colors">
+                    <Target className="w-3.5 h-3.5" />
+                    <span className="text-[8px] font-mono">ANALYZE</span>
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setActivePage?.('change'); }} className="flex flex-col items-center justify-center gap-1 p-1.5 rounded hover:bg-amber-500/10 text-amber-400/80 hover:text-amber-400 transition-colors">
+                    <ArrowLeftRight className="w-3.5 h-3.5" />
+                    <span className="text-[8px] font-mono">COMPARE</span>
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

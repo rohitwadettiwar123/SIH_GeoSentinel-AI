@@ -16,7 +16,6 @@ import Sidebar, { PageId } from './components/Sidebar';
 import DashboardPage from './pages/DashboardPage';
 import SemanticSearchPage from './pages/SemanticSearchPage';
 import ChangeAnalysisPage from './pages/ChangeAnalysisPage';
-import SimilarSitesPage from './pages/SimilarSitesPage';
 import AskAIPage from './pages/AskAIPage';
 import EvidenceReviewPage from './pages/EvidenceReviewPage';
 import DataIngestionPage from './pages/DataIngestionPage';
@@ -441,9 +440,8 @@ function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'dashboard':       return <DashboardPage />;
-      case 'semantic-search': return <SemanticSearchPage />;
+      case 'semantic-search': return <SemanticSearchPage setActivePage={setActivePage} />;
       case 'change-analysis': return <ChangeAnalysisPage />;
-      case 'similar-sites':   return <SimilarSitesPage />;
       case 'tactical':        return TacticalView;
       case 'explorer3d':      return Explorer3DView;
       case 'ask-ai':          return <AskAIPage />;

@@ -2,6 +2,7 @@ from geosentinel.core.registry import register
 from typing import List, Tuple
 import numpy as np
 import os
+import json
 
 try:
     import faiss
@@ -9,9 +10,9 @@ except ImportError:
     faiss = None
 
 class VectorStore:
-    def add(self, ids: List[str], vecs: np.ndarray):
+    def add(self, ids: List[str], vecs: np.ndarray, meta_list: List[dict] = None):
         raise NotImplementedError
-    def search(self, q: np.ndarray, k: int, id_filter=None) -> Tuple[np.ndarray, np.ndarray]:
+    def search(self, q: np.ndarray, k: int, id_filter=None) -> Tuple[List[str], np.ndarray, List[dict]]:
         raise NotImplementedError
 
 @register("vector_store", "faiss")
@@ -20,35 +21,47 @@ class FaissStore(VectorStore):
         if faiss is None:
             raise ImportError("faiss is required")
         self.dim = dim
-        if index_type == "flat":
-            self.index = faiss.IndexFlatL2(dim)
-        else:
-            self.index = faiss.IndexFlatL2(dim) # simplified MVP
+        self.index = faiss.IndexFlatIP(dim)
         
         self.id_map = [] # stores strings since faiss flat index uses int IDs
-        self.index_path = "data/indexes/faiss.index"
-        self.id_map_path = "data/indexes/id_map.txt"
+        self.meta_map = []
+        self.index_path = "backend/data/indexes/faiss.index"
+        self.id_map_path = "backend/data/indexes/id_map.txt"
+        self.meta_map_path = "backend/data/indexes/meta_map.json"
 
-    def add(self, ids: List[str], vecs: np.ndarray):
+    def add(self, ids: List[str], vecs: np.ndarray, meta_list: List[dict] = None):
         faiss.normalize_L2(vecs)
         self.index.add(vecs)
         self.id_map.extend(ids)
+        if meta_list:
+            self.meta_map.extend(meta_list)
+        else:
+            self.meta_map.extend([{} for _ in ids])
         
-    def search(self, q: np.ndarray, k: int, id_filter: List[str]=None) -> Tuple[List[str], np.ndarray]:
+    def search(self, q: np.ndarray, k: int, id_filter: List[str]=None) -> Tuple[List[str], np.ndarray, List[dict]]:
+        if self.index.ntotal == 0:
+            return [], [], []
+            
         faiss.normalize_L2(q)
-        distances, indices = self.index.search(q, k)
+        actual_k = min(k, self.index.ntotal)
+        distances, indices = self.index.search(q, actual_k)
         
         results_ids = []
+        results_metas = []
         for row_idx in indices:
             row_ids = []
+            row_metas = []
             for i in row_idx:
-                if i >= 0 and i < len(self.id_map):
+                if 0 <= i < len(self.id_map):
                     row_ids.append(self.id_map[i])
+                    row_metas.append(self.meta_map[i])
                 else:
                     row_ids.append("")
+                    row_metas.append({})
             results_ids.append(row_ids)
+            results_metas.append(row_metas)
             
-        return results_ids, distances
+        return results_ids, distances, results_metas
 
     def save(self):
         os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
@@ -56,6 +69,8 @@ class FaissStore(VectorStore):
         with open(self.id_map_path, 'w') as f:
             for i in self.id_map:
                 f.write(f"{i}\n")
+        with open(self.meta_map_path, 'w') as f:
+            json.dump(self.meta_map, f)
 
     def load(self):
         if os.path.exists(self.index_path):
@@ -63,3 +78,6 @@ class FaissStore(VectorStore):
         if os.path.exists(self.id_map_path):
             with open(self.id_map_path, 'r') as f:
                 self.id_map = [line.strip() for line in f]
+        if os.path.exists(self.meta_map_path):
+            with open(self.meta_map_path, 'r') as f:
+                self.meta_map = json.load(f)

@@ -1,0 +1,53 @@
+# Multi-stage build for FREE deployment on Hugging Face Spaces
+
+# Stage 1: Build the React Frontend
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+# Hardcode the API URL to be the same domain for single-port serving
+ENV VITE_API_URL=/api
+RUN npm run build
+
+# Stage 2: Setup Python Backend
+FROM python:3.11-slim
+
+# Create user to run the app (Hugging Face requirement)
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH"
+
+WORKDIR /app
+
+# Install system dependencies
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ curl \
+    && rm -rf /var/lib/apt/lists/*
+USER user
+
+# Install Python requirements
+COPY --chown=user requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend code
+COPY --chown=user . .
+
+# Copy built frontend from Stage 1
+COPY --from=frontend-builder --chown=user /app/dist /app/frontend/dist
+
+# Expose Hugging Face default port
+EXPOSE 7860
+
+# We'll use a startup script to build the FAISS index if it's missing, then start the server
+RUN echo '#!/bin/bash\n\
+if [ ! -f backend/data/indexes/faiss.index ]; then\n\
+  echo "Building initial Semantic Search Index..."\n\
+  python scripts/build_geosentinel_index.py\n\
+fi\n\
+echo "Starting Uvicorn..."\n\
+uvicorn backend.main:app --host 0.0.0.0 --port 7860\n\
+' > /app/start.sh && chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]

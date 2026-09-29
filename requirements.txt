@@ -15,3 +15,7 @@ google-generativeai
 reportlab
 python-jose
 groq
+faiss-cpu
+sentence-transformers
+torch
+torchvision

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
@@ -92,12 +92,14 @@ from geosentinel.api_v1.ingest import router as geosentinel_ingest_router
 from geosentinel.api_v1.search import router as geosentinel_search_router
 from geosentinel.api_v1.analyze import router as geosentinel_analyze_router
 from geosentinel.api_v1.discover import router as geosentinel_discover_router
-app.include_router(geosentinel_health_router)
-app.include_router(geosentinel_ingest_router)
-app.include_router(geosentinel_search_router)
-app.include_router(geosentinel_analyze_router)
-app.include_router(geosentinel_discover_router)
+app.include_router(geosentinel_health_router, prefix="/api")
+app.include_router(geosentinel_ingest_router, prefix="/api")
+app.include_router(geosentinel_search_router, prefix="/api")
+app.include_router(geosentinel_analyze_router, prefix="/api")
+app.include_router(geosentinel_discover_router, prefix="/api")
 
+
+import os
 
 # ── Global exception handler ──────────────────────────────────────────────────
 @app.exception_handler(Exception)
@@ -108,12 +110,23 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"error": "Internal server error", "detail": str(exc)},
     )
 
-
-@app.get("/", tags=["root"])
-async def root():
-    return {
-        "service": "SatQuery AI",
-        "version": "2.0.0",
-        "status": "operational",
-        "docs": "/docs",
-    }
+# ── Serve React Frontend (For Single-Port Deployments like Hugging Face) ──────
+dist_path = Path("frontend/dist")
+if dist_path.exists() and dist_path.is_dir():
+    app.mount("/", StaticFiles(directory=str(dist_path), html=True), name="frontend")
+    
+    # Custom 404 handler for React Router SPA
+    @app.exception_handler(404)
+    async def custom_404_handler(request: Request, exc: Exception):
+        if request.url.path.startswith("/api"):
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+        return FileResponse(str(dist_path / "index.html"))
+else:
+    @app.get("/", tags=["root"])
+    async def root():
+        return {
+            "service": "SatQuery AI",
+            "version": "2.0.0",
+            "status": "operational",
+            "docs": "/docs",
+        }
