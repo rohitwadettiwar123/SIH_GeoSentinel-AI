@@ -25,7 +25,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         if not settings.gemini_api_key:
             raise ValueError("GEMINI_API_KEY is required for this provider.")
         genai.configure(api_key=settings.gemini_api_key)
-        self.text_model = "models/text-embedding-004"
+        self.text_model = "models/embedding-001"
         self.vision_model = genai.GenerativeModel("gemini-1.5-flash")
 
     def embed_images(self, image_paths: List[str]) -> np.ndarray:
