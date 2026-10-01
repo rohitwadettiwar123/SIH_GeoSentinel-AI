@@ -27,7 +27,7 @@ def search_text(req: TextSearchRequest):
         EmbeddingCls = get_plugin("embedding", provider_name)
     except ValueError:
         # Fallback if sentence_transformers isn't in config
-        EmbeddingCls = get_plugin("embedding", "sentence_transformers")
+        EmbeddingCls = get_plugin("embedding", "gemini_api")
         
     embedder = EmbeddingCls()
     vec = embedder.embed_text([req.query])
@@ -112,7 +112,7 @@ async def search_image(file: UploadFile = File(...), top_k: int = 20):
     try:
         EmbeddingCls = get_plugin("embedding", provider_name)
     except ValueError:
-        EmbeddingCls = get_plugin("embedding", "sentence_transformers")
+        EmbeddingCls = get_plugin("embedding", "gemini_api")
         
     embedder = EmbeddingCls()
     
