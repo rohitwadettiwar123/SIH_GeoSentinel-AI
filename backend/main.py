@@ -37,7 +37,8 @@ async def lifespan(app: FastAPI):
     if not index_path.exists():
         log.info("FAISS index not found. Starting background build via Gemini API...")
         import subprocess
-        subprocess.Popen(["python", "scripts/build_geosentinel_index.py"])
+        import sys
+        subprocess.Popen([sys.executable, "scripts/build_geosentinel_index.py"])
         log.info("Index build started in background (will take 1-2 mins).")
 
     log.info("✅ Directories ready. Backend is live.")

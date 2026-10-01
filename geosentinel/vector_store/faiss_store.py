@@ -82,7 +82,8 @@ class FaissStore(VectorStore):
         FaissStore._cached_meta_map = None
 
     def load(self):
-        if FaissStore._cached_index is not None:
+        # Only use cache if it actually has items, otherwise we might be waiting for a background build
+        if FaissStore._cached_index is not None and FaissStore._cached_index.ntotal > 0:
             self.index = FaissStore._cached_index
             self.id_map = FaissStore._cached_id_map
             self.meta_map = FaissStore._cached_meta_map
