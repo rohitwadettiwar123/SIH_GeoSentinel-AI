@@ -19,14 +19,12 @@ class ChatRequest(BaseModel):
 
 @router.post("/chat")
 async def chat_copilot(req: ChatRequest):
-    if not settings.groq_api_key:
-        return {"response": "SYSTEM: Assistant Copilot requires GROQ_API_KEY to be set in the .env file."}
+    if not settings.gemini_api_key:
+        return {"response": "SYSTEM: Assistant Copilot requires GEMINI_API_KEY to be set in the environment variables."}
     
     try:
-        client = Groq(api_key=settings.groq_api_key)
-        
-        
-        # Convert history to Groq format
+        import google.generativeai as genai
+        genai.configure(api_key=settings.gemini_api_key)
         
         system_content = "You are an advanced geospatial AI analyst. Provide concise, highly accurate answers."
         if req.aoi:
@@ -40,28 +38,19 @@ CRS: EPSG:4326
 
 The AI must not invent satellite observations. If actual imagery/analysis is unavailable, explicitly state that the available data is insufficient instead of claiming that it detected something."""
 
-        formatted_messages = [
-            {
-                "role": "system",
-                "content": system_content
-            }
-        ]
+        # Convert history to Gemini format
+        formatted_messages = []
         for msg in req.messages:
-            if msg.role == 'assistant':
-                role = 'assistant'
-            else:
-                role = 'user'
+            role = 'model' if msg.role == 'assistant' else 'user'
             formatted_messages.append({
                 "role": role,
-                "content": msg.content
+                "parts": [msg.content]
             })
             
-        chat_completion = client.chat.completions.create(
-            messages=formatted_messages,
-            model="qwen/qwen3.8-27b",
-        )
+        model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=system_content)
+        response = model.generate_content(formatted_messages)
         
-        return {"response": chat_completion.choices[0].message.content}
+        return {"response": response.text}
     except Exception as e:
-        log.exception("Chat Copilot error (Groq)")
+        log.exception("Chat Copilot error (Gemini)")
         return {"response": f"Error: {str(e)}"}
