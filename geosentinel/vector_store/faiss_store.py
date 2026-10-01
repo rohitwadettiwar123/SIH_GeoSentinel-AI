@@ -21,7 +21,7 @@ class FaissStore(VectorStore):
     _cached_id_map = None
     _cached_meta_map = None
 
-    def __init__(self, dim: int = 512, index_type: str = "flat"):
+    def __init__(self, dim: int = 768, index_type: str = "flat"):
         if faiss is None:
             raise ImportError("faiss is required")
         self.dim = dim

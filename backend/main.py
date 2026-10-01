@@ -32,6 +32,14 @@ async def lifespan(app: FastAPI):
         settings.audit_log_path.parent.mkdir(parents=True, exist_ok=True)
         settings.audit_log_path.write_text(json.dumps([], ensure_ascii=False, indent=2))
 
+    # Auto-build FAISS index if missing
+    index_path = settings.data_dir / "indexes" / "faiss.index"
+    if not index_path.exists():
+        log.info("FAISS index not found. Building it via Gemini API...")
+        import subprocess
+        subprocess.run(["python", "scripts/build_geosentinel_index.py"], check=False)
+        log.info("Index build complete.")
+
     log.info("✅ Directories ready. Backend is live.")
     log.info("📡 Gemini API: %s", "configured" if settings.gemini_api_key else "NOT configured (deterministic fallback)")
 
