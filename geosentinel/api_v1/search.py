@@ -75,7 +75,8 @@ def search_text(req: TextSearchRequest):
                 date=meta.get("acquisition_date", "2024-01-01"),
                 sensor=meta.get("sensor", "Unknown"),
                 scores={"semantic": final_score},
-                thumb=meta.get("preview_url", "")
+                thumb=meta.get("preview_url", ""),
+                region=meta.get("region", "Unknown Region")
             ))
             
     # Sort and take top_k
@@ -152,7 +153,8 @@ async def search_image(file: UploadFile = File(...), top_k: int = 20):
                 date=meta.get("acquisition_date", "2024-01-01"),
                 sensor=meta.get("sensor", "Unknown"),
                 scores={"semantic": score},
-                thumb=meta.get("preview_url", "")
+                thumb=meta.get("preview_url", ""),
+                region=meta.get("region", "Unknown Region")
             ))
             
     hits.sort(key=lambda x: x.scores.get("semantic", 0), reverse=True)

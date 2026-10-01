@@ -41,8 +41,17 @@ def main():
         elif "optical" in img_path.name.lower():
             sensor = "Sentinel-2"
         
+        # Parse filename for cleaner names (e.g. "sundarbans_before" -> "Sundarbans")
+        raw_name = img_path.stem
+        parts = raw_name.replace("_before", "").replace("_after", "").replace("_t0", "").replace("_t1", "").split("_")
+        region_name = " ".join([p.capitalize() for p in parts if p.lower() not in ["demo", "change", "image"]])
+        if not region_name:
+            region_name = "Unknown Region"
+            
+        clean_title = raw_name.replace("_", " ").title()
+        
         meta = {
-            "tile_id": f"TILE_{img_path.stem}",
+            "tile_id": clean_title,
             "scene_id": f"SCENE_{i:04d}",
             "image_url": f"/uploads/{img_path.name}",
             "preview_url": f"/uploads/{img_path.name}",
@@ -50,7 +59,8 @@ def main():
             "longitude": round(random.uniform(70.0, 90.0), 3),
             "acquisition_date": "2024-08-15",
             "sensor": sensor,
-            "cloud_cover": round(random.uniform(0, 5), 1)
+            "cloud_cover": round(random.uniform(0, 5), 1),
+            "region": region_name
         }
         
         store.add([meta["tile_id"]], vec, [meta])

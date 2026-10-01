@@ -34,6 +34,7 @@ class SearchHit(BaseModel):
     sensor: str
     scores: Dict[str, float]
     thumb: str
+    region: Optional[str] = None
 
 class Observation(BaseModel):
     obs_id: str
