@@ -17,6 +17,10 @@ class VectorStore:
 
 @register("vector_store", "faiss")
 class FaissStore(VectorStore):
+    _cached_index = None
+    _cached_id_map = None
+    _cached_meta_map = None
+
     def __init__(self, dim: int = 512, index_type: str = "flat"):
         if faiss is None:
             raise ImportError("faiss is required")
@@ -71,8 +75,19 @@ class FaissStore(VectorStore):
                 f.write(f"{i}\n")
         with open(self.meta_map_path, 'w') as f:
             json.dump(self.meta_map, f)
+        
+        # Invalidate cache
+        FaissStore._cached_index = None
+        FaissStore._cached_id_map = None
+        FaissStore._cached_meta_map = None
 
     def load(self):
+        if FaissStore._cached_index is not None:
+            self.index = FaissStore._cached_index
+            self.id_map = FaissStore._cached_id_map
+            self.meta_map = FaissStore._cached_meta_map
+            return
+
         if os.path.exists(self.index_path):
             self.index = faiss.read_index(self.index_path)
         if os.path.exists(self.id_map_path):
@@ -81,3 +96,7 @@ class FaissStore(VectorStore):
         if os.path.exists(self.meta_map_path):
             with open(self.meta_map_path, 'r') as f:
                 self.meta_map = json.load(f)
+
+        FaissStore._cached_index = self.index
+        FaissStore._cached_id_map = self.id_map
+        FaissStore._cached_meta_map = self.meta_map

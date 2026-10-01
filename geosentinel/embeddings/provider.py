@@ -18,11 +18,15 @@ class EmbeddingProvider:
 
 @register("embedding", "sentence_transformers")
 class SentenceTransformerProvider(EmbeddingProvider):
+    _cached_model = None
+
     def __init__(self, model_name: str = "clip-ViT-B-32"):
         super().__init__("sentence_transformers", "1.0", 512)
         try:
             from sentence_transformers import SentenceTransformer
-            self.model = SentenceTransformer(model_name)
+            if SentenceTransformerProvider._cached_model is None:
+                SentenceTransformerProvider._cached_model = SentenceTransformer(model_name)
+            self.model = SentenceTransformerProvider._cached_model
             self.dim = self.model.get_sentence_embedding_dimension()
         except ImportError:
             raise ImportError("sentence_transformers is not installed. Please install it.")
