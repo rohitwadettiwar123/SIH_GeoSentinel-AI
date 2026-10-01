@@ -13,7 +13,7 @@ import geosentinel.vector_store.faiss_store
 def main():
     print("Building GeoSentinel Semantic Index...")
     
-    EmbeddingCls = get_plugin("embedding", "sentence_transformers")
+    EmbeddingCls = get_plugin("embedding", "gemini_api")
     embedder = EmbeddingCls()
     
     VectorStoreCls = get_plugin("vector_store", "faiss")
