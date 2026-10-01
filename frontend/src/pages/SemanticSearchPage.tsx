@@ -226,7 +226,7 @@ export default function SemanticSearchPage({ setActivePage }: { setActivePage: (
             >
               <div className="h-28 bg-[#020817] relative flex items-center justify-center group overflow-hidden shrink-0">
                 {r.thumb ? (
-                  <img src={`${API_BASE.replace('/api', '')}${r.thumb}`} alt="Satellite Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <img src={`${API_BASE.replace(/\/api\/?$/, '')}${r.thumb}`} alt="Satellite Preview" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                 ) : (
                   <ImageIcon className="w-8 h-8 text-gray-700" />
                 )}
