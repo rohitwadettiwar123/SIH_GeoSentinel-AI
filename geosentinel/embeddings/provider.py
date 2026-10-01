@@ -32,20 +32,34 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         import google.generativeai as genai
         from PIL import Image
         embeddings = []
+        
+        vision_models = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-pro-vision"]
+        
         for p in image_paths:
             try:
                 img = Image.open(p)
-                # 1. Ask Gemini Vision to describe the satellite image in detail
                 prompt = "Describe this satellite image in extreme detail, focusing on geographical features, water bodies, vegetation, urban areas, and any visible structures."
-                response = self.vision_model.generate_content([prompt, img])
-                description = response.text
+                
+                description = ""
+                for m_name in vision_models:
+                    try:
+                        v_model = genai.GenerativeModel(m_name)
+                        response = v_model.generate_content([prompt, img])
+                        description = response.text
+                        break  # Stop trying if successful
+                    except Exception as e:
+                        if "404" in str(e):
+                            continue # Try next model
+                        raise e # Reraise if it's an API key error or rate limit
+                
+                if not description:
+                    description = "A satellite image showing various geographical features."
                 
                 # 2. Embed the text description
                 emb_res = genai.embed_content(model=self.text_model, content=description)
                 embeddings.append(emb_res['embedding'])
             except Exception as e:
                 print(f"Error embedding image {p}: {e}")
-                # Fallback to zero vector if Gemini fails (e.g. rate limit)
                 embeddings.append([0.0] * 768)
                 
         return np.array(embeddings, dtype=np.float32)
