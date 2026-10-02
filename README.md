@@ -397,25 +397,9 @@ Password: geosentinel2024
 
 ---
 
-## 👨‍💻 Team
+## 🧑‍🤝‍🧑 Team
 
-<div align="center">
-
-| | Developer | Role |
-|--|-----------|------|
-| 🧑‍💻 | **Rohit Wadettiwar** | Full-Stack Developer & AI Engineer |
-
-**Built with ❤️ for Smart India Hackathon**
-
-</div>
-
----
-
-## 📜 License
-
-```
-MIT License — Free to use, modify, and distribute.
-```
+Built with ❤️ for **Smart India Hackathon (SIH)** by **Team SparkX**
 
 ---
 
