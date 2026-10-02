@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Animated Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:00d4ff,100:0d1117&height=200&section=header&text=GeoSentinel%20AI&fontSize=60&fontColor=00d4ff&fontAlignY=40&desc=Satellite%20Intelligence%20Platform&descAlignY=65&descSize=22&animation=twinkling" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:020817,30:0a2040,70:0a2040,100:020817&height=220&section=header&text=GeoSentinel%20AI&fontSize=65&fontColor=ffffff&fontAlignY=42&desc=Satellite%20Intelligence%20Platform%20%C2%B7%20Powered%20by%20Gemini%20AI&descAlignY=65&descSize=20&descColor=00d4ff&animation=twinkling&stroke=00d4ff&strokeWidth=2" width="100%"/>
 
 <br/>
 
@@ -422,7 +422,7 @@ MIT License — Free to use, modify, and distribute.
 <div align="center">
 
 <!-- Footer wave -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:00d4ff,100:0d1117&height=120&section=footer&animation=twinkling" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:020817,30:0a2040,70:0a2040,100:020817&height=120&section=footer&animation=twinkling" width="100%"/>
 
 **⭐ If this project helped you, please give it a star! ⭐**
 
